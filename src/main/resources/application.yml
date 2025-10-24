@@ -1,0 +1,49 @@
+
+spring:
+  application:
+    name: circuit-breaker-patterns
+
+circuit-breaker:
+  services:
+    user-service:
+      failure-rate-threshold: 80
+      wait-duration-in-open-state: 60s
+      sliding-window-size: 10
+      minimum-number-of-calls: 5
+      timeout-duration: 3s
+      automatic-transition-from-open-to-half-open-enabled: true
+      permitted-number-of-calls-in-half-open-state: 3
+
+    payment-service:
+      failure-rate-threshold: 40
+      wait-duration-in-open-state: 90s
+      sliding-window-size: 15
+      minimum-number-of-calls: 8
+      timeout-duration: 5s
+      automatic-transition-from-open-to-half-open-enabled: true
+      permitted-number-of-calls-in-half-open-state: 5
+
+    notification-service:
+      failure-rate-threshold: 60
+      wait-duration-in-open-state: 45s
+      sliding-window-size: 8
+      minimum-number-of-calls: 3
+      timeout-duration: 2s
+      automatic-transition-from-open-to-half-open-enabled: true
+      permitted-number-of-calls-in-half-open-state: 2
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,circuitbreakers
+  endpoint:
+    health:
+      show-details: always
+    circuitbreakers:
+      enabled: true
+
+logging:
+  level:
+    com.codestorykh: INFO
+    io.github.resilience4j: DEBUG
