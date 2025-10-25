@@ -1,20 +1,17 @@
 package com.circuitbreaker.circuit_breaker_patterns.config;
 
-import org.springframework.context.annotation.*;
-import org.springframework.http.client.*;
-import org.springframework.web.client.*;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.web.reactive.function.client.WebClient;
 
 @Configuration
 public class RestTemplateConfig {
 
     @Bean
-    public RestTemplate restTemplate() {
-
-        // Create request factory with timeout settings
-        SimpleClientHttpRequestFactory requestFactory = new SimpleClientHttpRequestFactory();
-        requestFactory.setConnectTimeout(5000); // 5 seconds connection timeout
-        requestFactory.setReadTimeout(10000); // 10 seconds read timeout
-
-        return new RestTemplate(requestFactory);
+    public WebClient webClient(@Value("${external-api.base-url:https://jsonplaceholder.typicode.com}") String baseUrl) {
+        return WebClient.builder()
+                .baseUrl(baseUrl)
+                .build();
     }
 }

@@ -5,8 +5,10 @@ import com.circuitbreaker.circuit_breaker_patterns.enums.*;
 import lombok.*;
 import lombok.extern.slf4j.*;
 import org.springframework.stereotype.*;
-import org.springframework.web.client.*;
+import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Mono;
 
+import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
@@ -17,7 +19,7 @@ import java.util.concurrent.atomic.AtomicLong;
 public class UserService {
 
     private final CircuitBreakerService circuitBreakerService;
-    private final RestTemplate restTemplate;
+    private final WebClient webClient;
 
     // In-memory user store for demo purposes
     private final ConcurrentHashMap<String, Map<String, Object>> userStore = new ConcurrentHashMap<>();
@@ -49,10 +51,10 @@ public class UserService {
 
     private Map<String, Object> getUserByIdWithRestTemplateOperation(String userId) {
         try {
-            // Call external API with timeout (configured in RestTemplateConfig)
-            String url = "https://jsonplaceholder.typicode.com/users/" + userId;
-            @SuppressWarnings("unchecked")
-            Map<String, Object> response = restTemplate.getForObject(url, Map.class);
+            // Call external API with configured base-url using WebClient
+            String urlPath = "/users/" + userId;
+            Mono<Map> mono = webClient.get().uri(urlPath).retrieve().bodyToMono(Map.class);
+            Map response = mono.block(Duration.ofSeconds(5));
 
             if (response != null) {
                 return Map.of(
@@ -65,17 +67,8 @@ public class UserService {
             } else {
                 throw new RuntimeException("External API returned null response");
             }
-        } catch (org.springframework.web.client.ResourceAccessException e) {
-            log.error("Network/Timeout error for user: {}", userId, e);
-            throw new RuntimeException("Network error or timeout: " + e.getMessage(), e);
-        } catch (org.springframework.web.client.HttpServerErrorException e) {
-            log.error("Server error (5xx) for user: {}", userId, e);
-            throw new RuntimeException("Internal Server Error: " + e.getResponseBodyAsString(), e);
-        } catch (org.springframework.web.client.HttpClientErrorException e) {
-            log.error("Client error (4xx) for user: {}", userId, e);
-            throw new RuntimeException("Client Error: " + e.getResponseBodyAsString(), e);
         } catch (Exception e) {
-            log.error("RestTemplate call failed for user: {}", userId, e);
+            log.error("WebClient call failed for user: {}", userId, e);
             throw new RuntimeException("External service call failed: " + e.getMessage(), e);
         }
     }

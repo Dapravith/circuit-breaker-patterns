@@ -5,6 +5,8 @@ import com.circuitbreaker.circuit_breaker_patterns.service.*;
 import lombok.*;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
+import jakarta.validation.Valid;
+import com.circuitbreaker.circuit_breaker_patterns.dto.UserDto;
 
 import java.util.*;
 
@@ -26,7 +28,11 @@ public class UserController {
     }
 
     @PostMapping("")
-    public ResponseEntity<Map<String, Object>> createUser(@RequestBody Map<String, Object> userData) {
+    public ResponseEntity<Map<String, Object>> createUser(@Valid @RequestBody UserDto userDto) {
+        Map<String, Object> userData = Map.of(
+                "name", userDto.getName(),
+                "email", userDto.getEmail()
+        );
         Map<String, Object> created = userService.createUser(userData);
         return ResponseEntity.ok(created);
     }

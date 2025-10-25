@@ -1,3 +1,6 @@
+app:
+  security:
+    enabled: false
 
 spring:
   application:
@@ -45,5 +48,5 @@ management:
 
 logging:
   level:
-    com.codestorykh: INFO
+    com.circuitbreaker: INFO
     io.github.resilience4j: DEBUG

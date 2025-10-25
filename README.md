@@ -212,6 +212,52 @@ curl http://localhost:8080/api/circuit-breaker/USER_SERVICE/state
 - Replace `RestTemplate` with `WebClient` for non-blocking calls if you plan to scale.
 - Add authentication and request validation for production readiness.
 
+## Autopush (automated local push) scripts
+Two small helper scripts are included to automate the typical edit → test → commit → push cycle. They are intended for developer convenience (local use) and are not enabled by default in CI.
+
+Files:
+- `scripts/autopush.sh` — Safe, single-run script that runs tests, stages all changes, commits, and pushes to the current branch. It aborts if tests fail.
+- `scripts/autopush-watch.sh` — Optional file-watcher that invokes `autopush.sh` whenever project files change. On macOS it uses `fswatch` (recommended); otherwise it falls back to a polling implementation.
+
+Important safety notes:
+- `autopush.sh` stages all working-tree changes (`git add -A`) before committing. Review your changes or modify the script to be more selective if you have sensitive files or untracked content you don't want pushed.
+- The scripts assume your git credentials are set up (SSH key or cached HTTPS credentials). They do not handle interactive credential prompts.
+- The watcher runs commands automatically — only enable it on trusted branches and environments. Prefer using it on local feature branches.
+- The scripts run `./mvnw test` and will abort the push if tests fail. This helps prevent broken code from being pushed accidentally.
+
+Usage examples
+
+Run a one-off autopush:
+
+```bash
+# Use an explicit commit message
+./scripts/autopush.sh "WIP: add feature X"
+
+# Use auto-generated timestamped commit message
+./scripts/autopush.sh
+```
+
+Run the file watcher (macOS recommended):
+
+```bash
+# Watch the repo root and debounce 2 seconds (default)
+./scripts/autopush-watch.sh
+
+# Watch a specific folder and use a 5-second debounce
+./scripts/autopush-watch.sh src/main/java 5
+```
+
+Customizing behavior
+- To skip tests (not recommended), edit `scripts/autopush.sh` and change the test command. Or add a `--skip-tests` flag implementation.
+- To limit what is committed, replace `git add -A` with a more selective `git add <paths>` step.
+
+Troubleshooting
+- If `./scripts/autopush.sh` fails with a git error, ensure your working tree is in a consistent state (resolve conflicts) and your credentials are set up.
+- If the watcher does not detect changes on macOS, install `fswatch` with Homebrew: `brew install fswatch`.
+
+Security reminder
+- Never embed secrets or private keys into commits. Use environment variables and `.gitignore` for local-only files.
+
 ## License
 MIT License
 
