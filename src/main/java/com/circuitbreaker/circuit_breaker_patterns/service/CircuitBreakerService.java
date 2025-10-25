@@ -13,4 +13,6 @@ public interface CircuitBreakerService {
     void resetCircuitBreaker(ServiceType serviceType);
 
     String getCircuitBreakerState(ServiceType serviceType);
+
+    void forceCircuitBreakerState(ServiceType serviceType, String state);
 }

@@ -44,6 +44,32 @@ public class CircuitBreakerController {
         }
     }
 
+    @PostMapping("/{serviceType}/force/{state}")
+    public ResponseEntity<Map<String, String>> forceCircuitBreakerState(@PathVariable String serviceType, @PathVariable String state) {
+        try {
+            ServiceType type = ServiceType.valueOf(serviceType.toUpperCase());
+
+            // Validate state
+            String normalized = state.toUpperCase().replace('-', '_');
+            if (!Set.of("OPEN", "CLOSED", "HALF_OPEN").contains(normalized)) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of(
+                        "error", "Invalid state value. Allowed: OPEN, HALF_OPEN, CLOSED"
+                ));
+            }
+
+            circuitBreakerService.forceCircuitBreakerState(type, normalized);
+            return ResponseEntity.ok(Map.of("serviceType", type.getServiceName(), "status", normalized));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of(
+                    "error", "Invalid service type or state: " + serviceType + " / " + state
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
+                    "error", "Failed to force state: " + e.getMessage()
+            ));
+        }
+    }
+
     @PostMapping("/states")
     public ResponseEntity<Map<String, String>> getAllCircuitBreakerStates() {
         try {

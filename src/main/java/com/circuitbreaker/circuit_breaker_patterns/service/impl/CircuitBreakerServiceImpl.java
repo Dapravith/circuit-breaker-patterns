@@ -56,6 +56,34 @@ public class CircuitBreakerServiceImpl implements CircuitBreakerService {
         return circuitBreaker.getState().toString();
     }
 
+    @Override
+    public void forceCircuitBreakerState(ServiceType serviceType, String state) {
+        CircuitBreaker circuitBreaker = getOrCreateCircuitBreaker(serviceType);
+        try {
+            switch (state.toUpperCase()) {
+                case "OPEN":
+                    circuitBreaker.transitionToOpenState();
+                    log.info("Circuit breaker forced to OPEN for service: {}", serviceType.getServiceName());
+                    break;
+                case "HALF_OPEN":
+                case "HALF-OPEN":
+                case "HALFOPEN":
+                    circuitBreaker.transitionToHalfOpenState();
+                    log.info("Circuit breaker forced to HALF_OPEN for service: {}", serviceType.getServiceName());
+                    break;
+                case "CLOSED":
+                    circuitBreaker.transitionToClosedState();
+                    log.info("Circuit breaker forced to CLOSED for service: {}", serviceType.getServiceName());
+                    break;
+                default:
+                    log.warn("Unknown circuit breaker state requested: {}", state);
+            }
+        } catch (Exception e) {
+            log.error("Failed to force circuit breaker state for {}: {}", serviceType.getServiceName(), e.getMessage(), e);
+            throw e;
+        }
+    }
+
     private CircuitBreaker getOrCreateCircuitBreaker(ServiceType serviceType) {
         return circuitBreakerCache.computeIfAbsent(serviceType, this::createCircuitBreaker);
     }
