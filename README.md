@@ -145,26 +145,72 @@ curl http://localhost:8080/api/circuit-breaker/USER_SERVICE/state
 curl -X POST http://localhost:8080/api/circuit-breaker/USER_SERVICE/reset
 ```
 
-## Fallback Logic
-If an external service fails or times out, a fallback response is returned, indicating the error and providing default data.
+## Demo UI
+A minimal full-stack demo UI is included so you can exercise the REST APIs from your browser.
 
-## Exception Handling
-All exceptions are handled by `GlobalExceptionHandler`, returning meaningful error messages and HTTP status codes.
+- File: `src/main/resources/static/index.html`
+- After starting the application (see "Build & Run"), open: `http://localhost:8080/`
+- The UI includes controls to create/get users, process payments, send email notifications, and inspect/reset circuit breakers.
 
-## Testing
-Run all tests:
-```sh
+## Postman Collection
+A Postman collection is included for easy API exploration and manual testing.
+
+- File: `postman/CircuitBreakerPatterns.postman_collection.json`
+- Import this JSON in Postman and set the `baseUrl` variable to `http://localhost:8080` (or your server URL).
+- The collection contains requests for creating users, processing payments, sending notifications, and managing circuit breakers.
+
+## Quick Verification (what I changed & test results)
+I implemented the following to make the project a runnable, testable full-stack demo:
+- Added RESTful user CRUD endpoints (GET `/api/users/{userId}`, POST `/api/users`).
+- Kept external demo endpoints under `/api/users/external/{userId}` which call a remote API (with a circuit breaker).
+- Added an in-memory user store in `UserService` for demo CRUD operations.
+- Ensured `RestTemplate` bean is configured and used for external calls.
+- Added a minimal static UI at `src/main/resources/static/index.html` to exercise the APIs from a browser.
+- Added a Postman collection at `postman/CircuitBreakerPatterns.postman_collection.json`.
+- Added comprehensive integration tests in `src/test/java/.../IntegrationTests.java` that exercise user creation, payment processing, and notification sending.
+
+Test run summary (on my machine):
+- `./mvnw test` — SUCCESS (4 tests passed: integration and context-load).
+
+## How to run locally
+Start the application:
+
+```bash
+./mvnw clean package
+./mvnw spring-boot:run
+```
+
+Run tests:
+
+```bash
 ./mvnw test
 ```
 
-## Troubleshooting
-- **500 Internal Server Error:** Check logs for stack traces. Common causes: missing beans, misconfigured circuit breaker, or external API issues.
-- **StackOverflowError:** Ensure no recursive method calls in service logic.
-- **No qualifying bean of type 'RestTemplate':** Make sure `RestTemplateConfig` provides a `RestTemplate` bean.
+Open the demo UI:
 
-## Extending
-- Add new services by updating `ServiceType` enum and configuration.
-- Customize circuit breaker settings per service in `application.yml`.
+- Visit: `http://localhost:8080/` and use the UI to call the APIs.
+
+Use Postman:
+
+- Import `postman/CircuitBreakerPatterns.postman_collection.json` and run the requests; make sure `baseUrl` is set to your server URL.
+
+Curl examples (already included in the README) — two quick examples:
+
+```bash
+# Create a user
+curl -X POST http://localhost:8080/api/users \
+  -H "Content-Type: application/json" \
+  -d '{"name": "John Doe", "email": "john@example.com"}'
+
+# Check circuit breaker state for USER_SERVICE
+curl http://localhost:8080/api/circuit-breaker/USER_SERVICE/state
+```
+
+## Next steps and suggestions
+- Add a Dockerfile and docker-compose to run the app and a mock external API for deterministic testing.
+- Add end-to-end (E2E) tests that run the UI against the running service.
+- Replace `RestTemplate` with `WebClient` for non-blocking calls if you plan to scale.
+- Add authentication and request validation for production readiness.
 
 ## License
 MIT License

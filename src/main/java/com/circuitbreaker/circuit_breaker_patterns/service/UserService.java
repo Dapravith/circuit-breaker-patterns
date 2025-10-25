@@ -8,6 +8,8 @@ import org.springframework.stereotype.*;
 import org.springframework.web.client.*;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLong;
 
 @Slf4j
 @Service
@@ -16,6 +18,26 @@ public class UserService {
 
     private final CircuitBreakerService circuitBreakerService;
     private final RestTemplate restTemplate;
+
+    // In-memory user store for demo purposes
+    private final ConcurrentHashMap<String, Map<String, Object>> userStore = new ConcurrentHashMap<>();
+    private final AtomicLong idCounter = new AtomicLong(System.currentTimeMillis());
+
+    // Public CRUD methods
+    public Map<String, Object> getUserById(String userId) {
+        return userStore.get(userId);
+    }
+
+    public Map<String, Object> createUser(Map<String, Object> userData) {
+        String id = String.valueOf(idCounter.incrementAndGet());
+        Map<String, Object> user = new HashMap<>();
+        user.put("id", id);
+        user.put("name", userData.getOrDefault("name", "Unknown"));
+        user.put("email", userData.getOrDefault("email", "unknown@example.com"));
+        user.put("createdAt", System.currentTimeMillis());
+        userStore.put(id, user);
+        return user;
+    }
 
     public Map<String, Object> getUserByIdWithRestTemplate(String userId) {
         return circuitBreakerService.executeWithCircuitBreaker (

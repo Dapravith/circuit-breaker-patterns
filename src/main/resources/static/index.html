@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Circuit Breaker Patterns - Demo UI</title>
+  <style>
+    body { font-family: Arial, Helvetica, sans-serif; margin: 24px; }
+    .card { border: 1px solid #ddd; padding: 12px; margin-bottom: 12px; border-radius: 6px; }
+    label { display:block; margin-top:8px; }
+    input, textarea { width:100%; padding:8px; font-size:14px; }
+    button { margin-top:8px; padding:8px 12px; }
+    pre { background:#f7f7f7; padding:8px; border-radius:4px; overflow:auto; }
+  </style>
+</head>
+<body>
+  <h1>Circuit Breaker Patterns - Demo UI</h1>
+
+  <div class="card">
+    <h3>Create User</h3>
+    <label>Name <input id="createName" value="John Doe"></label>
+    <label>Email <input id="createEmail" value="john@example.com"></label>
+    <button onclick="createUser()">Create</button>
+    <pre id="createUserResult">-</pre>
+  </div>
+
+  <div class="card">
+    <h3>Get User</h3>
+    <label>User ID <input id="getUserId"></label>
+    <button onclick="getUser()">Get</button>
+    <pre id="getUserResult">-</pre>
+  </div>
+
+  <div class="card">
+    <h3>Process Payment</h3>
+    <label>Amount <input id="amount" value="10.00"></label>
+    <label>Currency <input id="currency" value="USD"></label>
+    <button onclick="processPayment()">Process</button>
+    <pre id="paymentResult">-</pre>
+  </div>
+
+  <div class="card">
+    <h3>Send Email</h3>
+    <label>To <input id="emailTo" value="user@example.com"></label>
+    <label>Subject <input id="emailSubject" value="Hello"></label>
+    <label>Body <textarea id="emailBody">Hi there</textarea></label>
+    <button onclick="sendEmail()">Send</button>
+    <pre id="emailResult">-</pre>
+  </div>
+
+  <div class="card">
+    <h3>Circuit Breaker</h3>
+    <button onclick="getStates()">Get All States</button>
+    <label>Service Type <input id="cbService" value="USER_SERVICE"></label>
+    <button onclick="getState()">Get State</button>
+    <button onclick="resetState()">Reset</button>
+    <pre id="cbResult">-</pre>
+  </div>
+
+<script>
+  const base = '';
+  async function createUser(){
+    const name = document.getElementById('createName').value;
+    const email = document.getElementById('createEmail').value;
+    const res = await fetch(base + '/api/users', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({name, email})
+    });
+    const body = await res.json();
+    document.getElementById('createUserResult').textContent = JSON.stringify(body, null, 2);
+    if(body.id) document.getElementById('getUserId').value = body.id;
+  }
+  async function getUser(){
+    const id = document.getElementById('getUserId').value;
+    const res = await fetch(base + '/api/users/' + id);
+    const body = await res.json();
+    document.getElementById('getUserResult').textContent = JSON.stringify(body, null, 2);
+  }
+  async function processPayment(){
+    const amount = parseFloat(document.getElementById('amount').value)||0;
+    const currency = document.getElementById('currency').value;
+    const res = await fetch(base + '/api/payments', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({amount, currency})
+    });
+    const body = await res.json();
+    document.getElementById('paymentResult').textContent = JSON.stringify(body, null, 2);
+  }
+  async function sendEmail(){
+    const to = document.getElementById('emailTo').value;
+    const subject = document.getElementById('emailSubject').value;
+    const bodyData = document.getElementById('emailBody').value;
+    const res = await fetch(base + '/api/notifications/email', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({to, subject, body: bodyData})
+    });
+    const body = await res.json();
+    document.getElementById('emailResult').textContent = JSON.stringify(body, null, 2);
+  }
+  async function getStates(){
+    const res = await fetch(base + '/api/circuit-breaker/states');
+    const body = await res.json();
+    document.getElementById('cbResult').textContent = JSON.stringify(body, null, 2);
+  }
+  async function getState(){
+    const service = document.getElementById('cbService').value;
+    const res = await fetch(base + '/api/circuit-breaker/' + service + '/state');
+    const body = await res.json();
+    document.getElementById('cbResult').textContent = JSON.stringify(body, null, 2);
+  }
+  async function resetState(){
+    const service = document.getElementById('cbService').value;
+    const res = await fetch(base + '/api/circuit-breaker/' + service + '/reset', {method:'POST'});
+    const body = await res.json();
+    document.getElementById('cbResult').textContent = JSON.stringify(body, null, 2);
+  }
+</script>
+</body>
+</html>

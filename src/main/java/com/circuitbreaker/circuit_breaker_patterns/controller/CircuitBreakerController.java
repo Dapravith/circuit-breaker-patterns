@@ -15,7 +15,7 @@ public class CircuitBreakerController {
 
     private final CircuitBreakerService circuitBreakerService;
 
-    @GetMapping("/{serviceType}/states")
+    @GetMapping("/{serviceType}/state")
     public ResponseEntity<Map<String, String>> getCircuitBreakerState(@PathVariable String serviceType) {
         try {
             ServiceType type = ServiceType.valueOf(serviceType.toUpperCase());
@@ -26,7 +26,20 @@ public class CircuitBreakerController {
             ));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of(
-                    "error", "Invalid service type" + serviceType
+                    "error", "Invalid service type: " + serviceType
+            ));
+        }
+    }
+
+    @PostMapping("/{serviceType}/reset")
+    public ResponseEntity<Map<String, String>> resetCircuitBreaker(@PathVariable String serviceType) {
+        try {
+            ServiceType type = ServiceType.valueOf(serviceType.toUpperCase());
+            circuitBreakerService.resetCircuitBreaker(type);
+            return ResponseEntity.ok(Map.of("serviceType", type.getServiceName(), "status", "reset"));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of(
+                    "error", "Invalid service type: " + serviceType
             ));
         }
     }
